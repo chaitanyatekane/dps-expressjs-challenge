@@ -1,6 +1,7 @@
 import express, { Express, Request, Response } from 'express';
 import dotenv from 'dotenv';
 import projectRoutes from './routes/project.routes';
+import reportRoutes from './routes/report.routes';
 
 dotenv.config();
 
@@ -17,6 +18,9 @@ app.get('/', (req: Request, res: Response) => {
 
 // Project routes
 app.use('/api/projects', projectRoutes);
+
+// Report routes
+app.use('/api/reports', reportRoutes);
 
 // Start the server
 if (process.env.NODE_ENV !== 'test') {

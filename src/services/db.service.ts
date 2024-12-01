@@ -13,6 +13,15 @@ db.exec(`
     )
 `);
 
+db.exec(`
+    CREATE TABLE IF NOT EXISTS reports (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        text TEXT NOT NULL,
+        project_id INTEGER NOT NULL,
+        FOREIGN KEY (project_id) REFERENCES projects (id) ON DELETE CASCADE
+    )
+`);
+
 function query(
 	sql: string,
 	params?:

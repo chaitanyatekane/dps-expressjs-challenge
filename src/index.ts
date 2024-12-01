@@ -1,5 +1,6 @@
 import express, { Express, Request, Response } from 'express';
 import dotenv from 'dotenv';
+import db from './services/db.service';
 
 dotenv.config();
 
@@ -18,5 +19,16 @@ app.get('/', (req: Request, res: Response) => {
 app.listen(port, () => {
 	console.log(`[server]: Server is running at http://localhost:${port}`);
 });
+
+const testQuery = () => {
+	try {
+		const data = db.query('SELECT 1 AS value'); // dummy
+		console.log('Database query result:', data);
+	} catch (error) {
+		console.error('Database error:', error);
+	}
+};
+
+testQuery();
 
 export default app;

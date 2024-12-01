@@ -51,6 +51,16 @@ export const createReport = async (
 			res.status(400).send('Missing required fields');
 			return;
 		}
+		const projectExists = db.query(
+			'SELECT id FROM projects WHERE id = @id',
+			{ id: project_id },
+		);
+		// console.log('Project Check:', projectExists);
+		if (projectExists.length === 0) {
+			console.error('Invalid project ID:', project_id);
+			res.status(400).send('Invalid project ID');
+			return;
+		}
 
 		db.run(
 			'INSERT INTO reports (text, project_id) VALUES (@text, @project_id)',
@@ -76,17 +86,22 @@ export const updateReport = async (
 			return;
 		}
 
-		const result = db.run(
+		const reportExists = db.query('SELECT id FROM reports WHERE id = @id', {
+			id,
+		});
+		// console.log('Report Check:', reportExists);
+
+		if (reportExists.length === 0) {
+			console.error('Report not found:', id);
+			res.status(404).send('Report not found');
+			return;
+		}
+		db.run(
 			'UPDATE reports SET text = @text, project_id = @project_id WHERE id = @id',
 			{ text, project_id, id },
 		);
 
-		if (result.changes === 0) {
-			res.status(404).send('Report not found');
-			return;
-		}
-
-		res.send('Report updated');
+		res.status(200).send('Report updated');
 	} catch (error) {
 		console.error('Error updating report:', error);
 		res.status(500).send('Internal Server Error');
@@ -105,14 +120,19 @@ export const deleteReport = async (
 			return;
 		}
 
-		const result = db.run('DELETE FROM reports WHERE id = @id', { id });
+		const reportExists = db.query('SELECT id FROM reports WHERE id = @id', {
+			id,
+		});
+		// console.log('Report Check:', reportExists);
 
-		if (result.changes === 0) {
+		if (reportExists.length === 0) {
+			console.error('Report not found:', id);
 			res.status(404).send('Report not found');
 			return;
 		}
 
-		res.send('Report deleted');
+		db.run('DELETE FROM reports WHERE id = @id', { id });
+		res.status(200).send('Report deleted');
 	} catch (error) {
 		console.error('Error deleting report:', error);
 		res.status(500).send('Internal Server Error');

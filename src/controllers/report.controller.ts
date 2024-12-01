@@ -14,6 +14,32 @@ export const getAllReports = async (
 	}
 };
 
+export const getReportsWithFrequentWords = async (
+	req: Request,
+	res: Response,
+): Promise<void> => {
+	try {
+		const reports = db.query(`
+            SELECT * FROM reports WHERE (
+                SELECT COUNT(*) 
+                FROM (
+                    SELECT word 
+                    FROM (
+                        SELECT json_each.value AS word 
+                        FROM json_each(json_array(text))
+                    ) 
+                    GROUP BY word 
+                    HAVING COUNT(word) >= 3
+                )
+            ) > 0
+        `);
+		res.json(reports);
+	} catch (error) {
+		console.error('Error fetching reports with frequent words:', error);
+		res.status(500).send('Internal Server Error');
+	}
+};
+
 export const createReport = async (
 	req: Request,
 	res: Response,

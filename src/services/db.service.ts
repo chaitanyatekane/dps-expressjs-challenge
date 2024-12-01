@@ -2,8 +2,16 @@ import sqlite from 'better-sqlite3';
 import path from 'path';
 
 const db = new sqlite(path.resolve('./db/db.sqlite3'), {
-	fileMustExist: true,
+	fileMustExist: false,
 });
+
+db.exec(`
+    CREATE TABLE IF NOT EXISTS projects (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        description TEXT NOT NULL
+    )
+`);
 
 function query(
 	sql: string,

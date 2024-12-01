@@ -1,6 +1,6 @@
 import express, { Express, Request, Response } from 'express';
 import dotenv from 'dotenv';
-import db from './services/db.service';
+import projectRoutes from './routes/project.routes';
 
 dotenv.config();
 
@@ -15,20 +15,14 @@ app.get('/', (req: Request, res: Response) => {
 	res.send('Welcome to the DPS Backend Challenge API!');
 });
 
+// Project routes
+app.use('/api/projects', projectRoutes);
+
 // Start the server
-app.listen(port, () => {
-	console.log(`[server]: Server is running at http://localhost:${port}`);
-});
-
-const testQuery = () => {
-	try {
-		const data = db.query('SELECT 1 AS value'); // dummy
-		console.log('Database query result:', data);
-	} catch (error) {
-		console.error('Database error:', error);
-	}
-};
-
-testQuery();
+if (process.env.NODE_ENV !== 'test') {
+	app.listen(port, () => {
+		console.log(`[server]: Server is running at http://localhost:${port}`);
+	});
+}
 
 export default app;

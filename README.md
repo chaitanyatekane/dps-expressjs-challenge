@@ -2,41 +2,124 @@
 
 ## Overview
 
-This repository contains a very basic web application based on Typescript and Express.js. Main application file is `index.ts`. Node and npm are required.
+This repository contains the solution to the DPS Backend Coding Challenge, a backend system for managing data about a company's projects and their associated reports. It includes RESTful API endpoints for CRUD operations and additional features such as authentication, JEST testing and a special endpoint for retrieving reports with frequent words.
+
+## Demo
+
+[Watch the demo video](https://youtu.be/ah2hPPjNctY)
+
+[![Demo Video](https://img.youtube.com/vi/ah2hPPjNctY/0.jpg)](https://youtu.be/ah2hPPjNctY)
 
 ## Environment Setup
 
-Ensure you have Node.js (v14.x or later) and npm (v6.x or later) installed.  
-To set up and run the application, execute the following commands:
+To set up and run the application locally:
+
+(1). Prerequisites:
+
+- Node.js: v14.x or later
+- npm: v6.x or later
+
+(2). Installation
 
 ```
 npm install
+```
+
+(3). Run the application
+
+```
 npm run dev
 ```
 
-The application will then be accessible at http://localhost:3000.
+(4). Access the application
 
-## Project Context
+The server will run at http://localhost:3000.
 
-You will develop a backend system for managing data about a company's projects and their associated reports. Each project may have multiple reports linked to it, though having reports is not mandatory. Start your implementation using the provided SQLite database([db/db.sqlite3](./db/db.sqlite3)).
+## Branching Strategy
 
-Refer to the database schema provided for understanding the data structure 👇
+- `master`: The main branch containing the final merged code.
+- `v1`: A feature branch where all challenge tasks and additional features were implemented in small, incremental commits. After completing all tasks, the v1 branch was merged into master.
 
-![Database schema](images/database_schema.png)
+## Features Implemented
 
-NOTE: You can use ([db.service.ts](./src/services/db.service.ts)) to handle SQL queries to the database.
+### REST API Development
 
-## Challenge Tasks
+Designed and implemented the following endpoints for CRUD operations:
 
--   **Fork this project:** Start by forking this repository
--   **REST API Development:** Design and implement a RESTful API to create, read, update, and delete projects and their reports.
--   **Special API Endpoint:** Create an API endpoint that retrieves all reports where the same word appears at least three times.
--   **Optional:** Secure all API routes with a hardcoded authentication token ("Password123").
--   **Submission:** After completing the challenge, email us the URL of your GitHub repository.
--   **Further information:**
-    -   If there is anything unclear regarding requirements, contact us by replying to our email.
-    -   Use small commits, we want to see your progress towards the solution.
-    -   Code clean and follow the best practices.
+- Projects:
 
-\
-Happy coding!
+    - `GET /api/projects`: Fetch all projects
+    - `POST /api/projects`: Create a new project
+    - `PUT /api/projects/:id`: Update a project
+    - `DELETE /api/projects/:id`: Delete a project
+
+- Reports:
+    - `GET /api/reports`: Fetch all reports
+    - `POST /api/reports`: Create a new report
+    - `PUT /api/reports/:id`: Update a report
+    - `DELETE /api/reports/:id`: Delete a report
+
+### Special API Endpoint
+
+Created a special endpoint to fetch reports containing words that appear at least three times across all reports:
+
+- Endpoint: `GET /api/reports/frequent-words`
+- Functionality:
+    - Identifies frequently occurring words (case-insensitive).
+    - Returns reports containing those words as exact matches.
+
+### Middleware for Authentication
+
+Secured all API routes using a hardcoded authentication token:
+
+- Token: `Password123`
+- Middleware: Checks the `Authorization` header
+- Usage: [key:`Authorization`, value: `Password123`]
+
+### Testing with JEST
+
+Comprehensive JEST test cases were written to ensure API functionality:
+
+- Validated CRUD operations for projects and reports.
+- Verified the logic for the frequent-words endpoint.
+- Mocked database queries for isolated testing.
+
+## Testing Setup
+
+(1). Test Framework:
+
+JEST was used as the testing framework.
+
+(2). How to Run Tests:
+
+```
+npm test
+```
+
+(3). Test Coverage:
+
+- CRUD operations for projects and reports.
+- The frequent-words endpoint logic.
+
+## Database schema
+
+- Projects Table:
+
+    - `id`: Primary key
+    - `name`: Name of the project
+    - `description`: Description of the project
+
+- Reports Table:
+    - `id`: Primary key
+    - `text`: Report content
+    - `project_id`: Foreign key referencing the project
+
+## Commit History
+
+Commit Logs (from v1 Branch)
+
+<img src="images/Commits.png" alt="Commit History" width="600">
+
+The complete code and history are available in the repository, including the `master` and `v1` branches.
+
+Excited to work with Digital Product School! 😊

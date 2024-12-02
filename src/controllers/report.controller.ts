@@ -23,7 +23,7 @@ export const getReportsWithFrequentWords = async (
 		type Report = { id: number; text: string; project_id: number };
 		const allReports = db.query('SELECT * FROM reports') as Report[];
 		// console.log('All Reports:', allReports);
-		// Preprocess text data to extract words and count occurrences
+		// Tokenize text into words and calculate word frequencies
 		const wordCounts: Record<string, number> = {};
 		allReports.forEach((report) => {
 			const words = report.text
@@ -49,12 +49,15 @@ export const getReportsWithFrequentWords = async (
 			return;
 		}
 		const reportsQuery = `
-            SELECT *
+            SELECT DISTINCT *
             FROM reports
             WHERE ${frequentWords
 				.map(
 					(word, index) =>
-						`lower(text) LIKE '%' || @word${index} || '%'`,
+						`LOWER(text) LIKE '% ' || @word${index} || ' %' OR ` +
+						`LOWER(text) LIKE '% ' || @word${index} || '' OR ` +
+						`LOWER(text) LIKE '' || @word${index} || ' %' OR ` +
+						`LOWER(text) = @word${index}`,
 				)
 				.join(' OR ')}
         `;

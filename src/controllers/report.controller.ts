@@ -20,26 +20,27 @@ export const getReportsWithFrequentWords = async (
 ): Promise<void> => {
 	try {
 		// console.log('Fetching reports with frequent words...');
-		const allReports = db.query('SELECT * FROM reports');
+		type Report = { id: number; text: string; project_id: number };
+		const allReports = db.query('SELECT * FROM reports') as Report[];
 		// console.log('All Reports:', allReports);
-		type FrequentWord = { word: string; count: number };
-		const frequentWordsQuery = `
-            SELECT lower(trim(word)) AS word, COUNT(*) as count
-            FROM (
-                SELECT 
-                    json_each.value AS word
-                FROM reports,
-                json_each(
-                    json_array(
-                        replace(replace(replace(text, '.', ''), ',', ''), '  ', ' ')
-                    )
-                )
-            )
-            GROUP BY word
-            HAVING COUNT(*) >= 3
-        `;
-		// console.log('Executing frequent words query...');
-		const frequentWords = db.query(frequentWordsQuery) as FrequentWord[];
+		// Preprocess text data to extract words and count occurrences
+		const wordCounts: Record<string, number> = {};
+		allReports.forEach((report) => {
+			const words = report.text
+				.toLowerCase()
+				.replace(/[.,!?]/g, '')
+				.split(/\s+/);
+			words.forEach((word) => {
+				if (word) {
+					wordCounts[word] = (wordCounts[word] || 0) + 1;
+				}
+			});
+		});
+		// console.log('Word Counts:', wordCounts);
+
+		const frequentWords = Object.entries(wordCounts)
+			.filter(([_, count]) => count >= 3)
+			.map(([word]) => word);
 		// console.log('Frequent Words:', frequentWords);
 
 		if (frequentWords.length === 0) {
@@ -47,23 +48,21 @@ export const getReportsWithFrequentWords = async (
 			res.json([]);
 			return;
 		}
-		const words = frequentWords.map((w) => w.word);
-		// console.log('Frequent Words Array:', words);
 		const reportsQuery = `
             SELECT *
             FROM reports
-            WHERE ${words
+            WHERE ${frequentWords
 				.map(
 					(word, index) =>
 						`lower(text) LIKE '%' || @word${index} || '%'`,
 				)
 				.join(' OR ')}
         `;
-		// console.log('Executing reports query...');
+		// console.log('Reports Query:', reportsQuery);
 		const reports = db.query(
 			reportsQuery,
 			Object.fromEntries(
-				words.map((word, index) => [`word${index}`, word]),
+				frequentWords.map((word, index) => [`word${index}`, word]),
 			),
 		);
 		// console.log('Reports containing frequent words:', reports);

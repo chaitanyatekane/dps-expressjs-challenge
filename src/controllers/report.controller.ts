@@ -19,20 +19,55 @@ export const getReportsWithFrequentWords = async (
 	res: Response,
 ): Promise<void> => {
 	try {
-		const reports = db.query(`
-            SELECT * FROM reports WHERE (
-                SELECT COUNT(*) 
-                FROM (
-                    SELECT word 
-                    FROM (
-                        SELECT json_each.value AS word 
-                        FROM json_each(json_array(text))
-                    ) 
-                    GROUP BY word 
-                    HAVING COUNT(word) >= 3
+		// console.log('Fetching reports with frequent words...');
+		const allReports = db.query('SELECT * FROM reports');
+		// console.log('All Reports:', allReports);
+		type FrequentWord = { word: string; count: number };
+		const frequentWordsQuery = `
+            SELECT lower(trim(word)) AS word, COUNT(*) as count
+            FROM (
+                SELECT 
+                    json_each.value AS word
+                FROM reports,
+                json_each(
+                    json_array(
+                        replace(replace(replace(text, '.', ''), ',', ''), '  ', ' ')
+                    )
                 )
-            ) > 0
-        `);
+            )
+            GROUP BY word
+            HAVING COUNT(*) >= 3
+        `;
+		// console.log('Executing frequent words query...');
+		const frequentWords = db.query(frequentWordsQuery) as FrequentWord[];
+		// console.log('Frequent Words:', frequentWords);
+
+		if (frequentWords.length === 0) {
+			console.log('No frequent words found.');
+			res.json([]);
+			return;
+		}
+		const words = frequentWords.map((w) => w.word);
+		// console.log('Frequent Words Array:', words);
+		const reportsQuery = `
+            SELECT *
+            FROM reports
+            WHERE ${words
+				.map(
+					(word, index) =>
+						`lower(text) LIKE '%' || @word${index} || '%'`,
+				)
+				.join(' OR ')}
+        `;
+		// console.log('Executing reports query...');
+		const reports = db.query(
+			reportsQuery,
+			Object.fromEntries(
+				words.map((word, index) => [`word${index}`, word]),
+			),
+		);
+		// console.log('Reports containing frequent words:', reports);
+
 		res.json(reports);
 	} catch (error) {
 		console.error('Error fetching reports with frequent words:', error);
@@ -51,15 +86,24 @@ export const createReport = async (
 			res.status(400).send('Missing required fields');
 			return;
 		}
-		const projectExists = db.query(
-			'SELECT id FROM projects WHERE id = @id',
-			{ id: project_id },
-		);
-		// console.log('Project Check:', projectExists);
+		let projectExists = db.query('SELECT id FROM projects WHERE id = @id', {
+			id: project_id,
+		});
 		if (projectExists.length === 0) {
-			console.error('Invalid project ID:', project_id);
-			res.status(400).send('Invalid project ID');
-			return;
+			console.log(
+				`Project ID ${project_id} not found. Creating a new project.`,
+			);
+			db.run(
+				'INSERT INTO projects (id, name, description) VALUES (@id, @name, @description)',
+				{
+					id: project_id,
+					name: `Project ${project_id}`,
+					description: 'Auto-created project',
+				},
+			);
+			projectExists = db.query('SELECT id FROM projects WHERE id = @id', {
+				id: project_id,
+			});
 		}
 
 		db.run(
